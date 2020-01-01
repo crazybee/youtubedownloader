@@ -7,6 +7,6 @@ namespace YoutubeVideoDownloader
 {
     interface IDownloader
     {
-        Task<bool> Download();
+        Task<DownloadResult> Download();
     }
 }

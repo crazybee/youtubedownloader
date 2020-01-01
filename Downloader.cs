@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Net.Mime;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 using YoutubeExplode;
@@ -18,8 +20,9 @@ namespace YoutubeVideoDownloader
             this.audioOnly = audioOnly;
         }
 
-        public async Task<bool> Download()
+        public async Task<DownloadResult> Download()
         {
+            var result = new DownloadResult();
             var id = YoutubeClient.ParseVideoId(this.url);
 
             var client = new YoutubeClient();
@@ -44,30 +47,42 @@ namespace YoutubeVideoDownloader
                 {
 
                     await client.DownloadMediaStreamAsync(streamInfo,
-                        $"VideoDownloaded{DateTime.UtcNow:yyyyMMDDhhmm}.{ext}", this.Displayprogress());
+                        $"VideoDownloaded{DateTime.UtcNow:yyyyMMddhhmmss}.{ext}", this.Displayprogress());
+                    result.Successful = true;
+              
                 }
                 else
                 {
-                    await client.DownloadMediaStreamAsync(streamInfo, $"AudioDownloaded{DateTime.UtcNow:yyyyMMDDhhmm}.{ext}", this.Displayprogress());
+                    await client.DownloadMediaStreamAsync(streamInfo, $"AudioDownloaded{DateTime.UtcNow:yyyyMMddhhmmss}.{ext}", this.Displayprogress());
+                    result.Successful = true;
                 }
 
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
-                return false;
+                result.Successful = false;
+                
             }
-
-            return true;
+            result.OutputFolder = System.IO.Path.GetDirectoryName(Assembly.GetEntryAssembly()?.Location);
+            return result;
         }
 
         private IProgress<double> Displayprogress()
         {
            return new Progress<double>(p =>
            {
-               Console.SetCursorPosition(0, 6);
+               Console.SetCursorPosition(0, 5);
                Console.Write(Convert.ToInt16(p*100).ToString() + "% \r");
            });
         }
+    }
+
+    public class DownloadResult
+    {
+        public bool Successful { get; set; }
+
+        public string OutputFolder { get; set; }
+
     }
 }
